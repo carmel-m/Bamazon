@@ -48,12 +48,12 @@ function promptUser() {
         type: "input",
         message: "What would you like to buy? Enter the item's ID # or press Q to exit.",
       })
-    .then(function (answer) {
+    .then(function (userResponse) {
 
       // need to save answer to a variable to use later?
       // check if ID matches an ID in the db
 
-      if (answer.chooseItem === "Q" || answer.chooseItem === "q") {
+      if (userResponse.chooseItem === "Q" || userResponse.chooseItem === "q") {
         connection.end();
       } else {
         howMany();
@@ -64,35 +64,64 @@ function promptUser() {
 
 // ASK USER HOW MANY THEY WANT TO BUY
 function howMany() {
-  // query the database for all items being auctioned
-  connection.query("SELECT * FROM products", function (err, res) {
+  // query the database for all items available
+  connection.query("SELECT * FROM products WHERE id = 'userResponse'", function (err, res) {
     if (err) throw err;
-    inquirer
-      .prompt(
-        {
-          name: "chooseQuant",
-          type: "input",
-          message: "How many would you like to buy?",
-          validate: function (value) {
-            if (isNaN(value) === false) {
-              return true;
+    console.log(res);
+
+    if (res.length > 0) {
+      inquirer
+        .prompt(
+          {
+            name: "chooseQuant",
+            type: "input",
+            message: "How many would you like to buy?",
+            validate: function (value) {
+              if (isNaN(value) === false) {
+                return true;
+              }
+              return false;
             }
-            return false;
+          })
+        .then(function (answer) {
+          var chosenItem;
+          for (var i = 0; res.length; i++) {
+            if (res[i].id === answer.chooseQuant) {
+              chosenItem == res[i];
+            }
           }
-        })
-      .then(function (answer) {
-        var chosenItem;
-        for (var i = 0; res.length; i++) {
-          if (res[i].id === answer.chooseQuant) {
-            chosenItem == res[i];
-          }
-        }
-
-      });
-    connection.end();
-  }
+        });
+    } else {
+      console.log("That item doesn't exist.");
+      promptUser();
+    }
+ 
+  });
+  connection.end();
+}
 
 
-// connection.end();
+// check if length of response is greater than 0
 
+    // inquirer
+    //   .prompt(
+    //     {
+    //       name: "chooseQuant",
+    //       type: "input",
+    //       message: "How many would you like to buy?",
+    //       validate: function (value) {
+    //         if (isNaN(value) === false) {
+    //           return true;
+    //         }
+    //         return false;
+    //       }
+    //     })
+    //   .then(function (answer) {
+    //     var chosenItem;
+    //     for (var i = 0; res.length; i++) {
+    //       if (res[i].id === answer.chooseQuant) {
+    //         chosenItem == res[i];
+    //       }
+    //     }
 
+    //   });
