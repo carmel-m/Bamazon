@@ -20,7 +20,7 @@ connection.connect(function (err) {
   if (err) throw err;
   console.log("connected as id " + connection.threadId);
   queryProducts();
-  // promptUser();
+
 });
 
 // DISPLAY PRODUCTS
@@ -30,6 +30,9 @@ function queryProducts() {
     console.log("-----------------------------------");
     console.log("WELCOME TO THE MARKETPLACE!");
     console.log("-----------------------------------");
+
+    // FIX THIS - MAKE TABLE DISPLAY BETTER
+    console.table(res);
     for (var i = 0; i < res.length; i++) {
       console.log(res[i].id + " || " + res[i].product_name + " || " + res[i].department_name + " || " + res[i].price);
     }
@@ -49,25 +52,38 @@ function promptUser() {
         message: "What would you like to buy? Enter the item's ID # or press Q to exit.",
       })
     .then(function (userResponse) {
-
-      // need to save answer to a variable to use later?
-      // check if ID matches an ID in the db
-
       if (userResponse.chooseItem === "Q" || userResponse.chooseItem === "q") {
         connection.end();
       } else {
-        howMany();
+        howMany(userResponse.chooseItem);
       }
     });
 }
 
+function updateQuant(userResponse, newQuant) {
+  connection.query("UPDATE products SET ? WHERE ?",
+    [
+      {
+        stock_quantity: newQuant
+      },
+      {
+        id: userResponse
+      }
+    ],
+    function (err, res) {
+      if (err) throw err;
+      queryProducts();
+    })
+}
+
 
 // ASK USER HOW MANY THEY WANT TO BUY
-function howMany() {
-  // query the database for all items available
-  connection.query("SELECT * FROM products WHERE id = 'userResponse'", function (err, res) {
+function howMany(userResponse) {
+
+  connection.query("SELECT * FROM products WHERE id = " + userResponse, function (err, res) {
     if (err) throw err;
     console.log(res);
+    var quantity = res[0].stock_quantity;
 
     if (res.length > 0) {
       inquirer
@@ -84,44 +100,28 @@ function howMany() {
             }
           })
         .then(function (answer) {
-          var chosenItem;
-          for (var i = 0; res.length; i++) {
-            if (res[i].id === answer.chooseQuant) {
-              chosenItem == res[i];
-            }
+          if (answer.chooseQuant > quantity) {
+            console.log("Sorry, we only have " + quantity + " in stock right now.")
+
+          } else {
+            var newQuant = (quantity - answer.chooseQuant);
+            console.log(newQuant);
+            console.log("success message");
+            updateQuant(userResponse, newQuant);
+
+            var totalCost = (res[0].price * answer.chooseQuant)
+            console.log("Your total cost is: " + totalCost + " .");
           }
+
         });
     } else {
       console.log("That item doesn't exist.");
       promptUser();
     }
- 
+
   });
-  connection.end();
+  // connection.end();
 }
 
 
-// check if length of response is greater than 0
 
-    // inquirer
-    //   .prompt(
-    //     {
-    //       name: "chooseQuant",
-    //       type: "input",
-    //       message: "How many would you like to buy?",
-    //       validate: function (value) {
-    //         if (isNaN(value) === false) {
-    //           return true;
-    //         }
-    //         return false;
-    //       }
-    //     })
-    //   .then(function (answer) {
-    //     var chosenItem;
-    //     for (var i = 0; res.length; i++) {
-    //       if (res[i].id === answer.chooseQuant) {
-    //         chosenItem == res[i];
-    //       }
-    //     }
-
-    //   });
