@@ -23,6 +23,7 @@ connection.connect(function (err) {
   // promptUser();
 });
 
+// DISPLAY PRODUCTS
 function queryProducts() {
   connection.query("SELECT * FROM products", function (err, res) {
     if (err) throw err;
@@ -33,33 +34,65 @@ function queryProducts() {
       console.log(res[i].id + " || " + res[i].product_name + " || " + res[i].department_name + " || " + res[i].price);
     }
     console.log("-----------------------------------");
+    promptUser();
   });
-  // promptUser();
 }
 
 
-
+// ASK USER WHICH ITEM THEY WANT TO BUY
 function promptUser() {
   inquirer
-  .prompt(
-    {
-    name: "item",
-    type: "input",
-    message: "What would you like to buy? Enter the item's ID # or press Q to exit.",
-  })
-  .then()
+    .prompt(
+      {
+        name: "chooseItem",
+        type: "input",
+        message: "What would you like to buy? Enter the item's ID # or press Q to exit.",
+      })
+    .then(function (answer) {
 
-  
-  
-  // {
-  //   name: "quantity",
-  //   type: "input",
-  //   message: "How many would you like to buy?"
-  // }
-  
+      // need to save answer to a variable to use later?
+      // check if ID matches an ID in the db
 
+      if (answer.chooseItem === "Q" || answer.chooseItem === "q") {
+        connection.end();
+      } else {
+        howMany();
+      }
+    });
 }
 
-connection.end();
+
+// ASK USER HOW MANY THEY WANT TO BUY
+function howMany() {
+  // query the database for all items being auctioned
+  connection.query("SELECT * FROM products", function (err, res) {
+    if (err) throw err;
+    inquirer
+      .prompt(
+        {
+          name: "chooseQuant",
+          type: "input",
+          message: "How many would you like to buy?",
+          validate: function (value) {
+            if (isNaN(value) === false) {
+              return true;
+            }
+            return false;
+          }
+        })
+      .then(function (answer) {
+        var chosenItem;
+        for (var i = 0; res.length; i++) {
+          if (res[i].id === answer.chooseQuant) {
+            chosenItem == res[i];
+          }
+        }
+
+      });
+    connection.end();
+  }
+
+
+// connection.end();
 
 
