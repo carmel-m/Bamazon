@@ -5,13 +5,10 @@ require("dotenv").config();
 var connection = mysql.createConnection({
   host: "localhost",
 
-  // Your port; if not 3306
   port: 3306,
 
-  // Your username
   user: "root",
 
-  // Your password
   password: process.env.SQL_PASS,
   database: "bamazon_DB"
 });
@@ -29,7 +26,7 @@ function queryProducts() {
     console.log("-----------------------------------");
     console.log("WELCOME TO THE MARKETPLACE!");
     console.log("-----------------------------------");
-    console.log("ID || ITEM || CATEGORY || PRICE")
+    console.log("ID || ITEM || DEPARTMENT || PRICE")
     for (var i = 0; i < res.length; i++) {
       console.log(res[i].id + " || " + res[i].product_name + " || " + res[i].department_name + " || " + res[i].price);
     }
