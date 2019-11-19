@@ -18,9 +18,8 @@ var connection = mysql.createConnection({
 
 connection.connect(function (err) {
   if (err) throw err;
-  console.log("connected as id " + connection.threadId);
+  // console.log("connected as id " + connection.threadId);
   queryProducts();
-
 });
 
 // DISPLAY PRODUCTS
@@ -30,9 +29,7 @@ function queryProducts() {
     console.log("-----------------------------------");
     console.log("WELCOME TO THE MARKETPLACE!");
     console.log("-----------------------------------");
-
-    // FIX THIS - MAKE TABLE DISPLAY BETTER
-    console.table(res);
+    console.log("ID || ITEM || CATEGORY || PRICE")
     for (var i = 0; i < res.length; i++) {
       console.log(res[i].id + " || " + res[i].product_name + " || " + res[i].department_name + " || " + res[i].price);
     }
@@ -40,7 +37,6 @@ function queryProducts() {
     promptUser();
   });
 }
-
 
 // ASK USER WHICH ITEM THEY WANT TO BUY
 function promptUser() {
@@ -60,6 +56,7 @@ function promptUser() {
     });
 }
 
+// UPDATE QUANTITY IN MYSQL
 function updateQuant(userResponse, newQuant) {
   connection.query("UPDATE products SET ? WHERE ?",
     [
@@ -72,17 +69,14 @@ function updateQuant(userResponse, newQuant) {
     ],
     function (err, res) {
       if (err) throw err;
-      queryProducts();
     })
 }
 
 
 // ASK USER HOW MANY THEY WANT TO BUY
 function howMany(userResponse) {
-
   connection.query("SELECT * FROM products WHERE id = " + userResponse, function (err, res) {
     if (err) throw err;
-    console.log(res);
     var quantity = res[0].stock_quantity;
 
     if (res.length > 0) {
@@ -101,27 +95,48 @@ function howMany(userResponse) {
           })
         .then(function (answer) {
           if (answer.chooseQuant > quantity) {
-            console.log("Sorry, we only have " + quantity + " in stock right now.")
-
+            console.log("Sorry, we only have " + quantity + " in stock right now.");
+            inquirer
+              .prompt(
+                {
+                  name: "tryAgain",
+                  type: "confirm",
+                  message: "Would you like to try a different amount?"
+                })
+              .then(function (answer) {
+                if (answer.tryAgain == true) {
+                  howMany(userResponse);
+                } else {
+                  console.log("Okay... bye then!");
+                  connection.end();
+                }
+              })
           } else {
             var newQuant = (quantity - answer.chooseQuant);
-            console.log(newQuant);
-            console.log("success message");
             updateQuant(userResponse, newQuant);
-
             var totalCost = (res[0].price * answer.chooseQuant)
-            console.log("Your total cost is: " + totalCost + " .");
+            console.log("Sold! Your total cost is: $" + totalCost + ".");
+            console.log("-----------------------------------");
+            inquirer
+              .prompt(
+                {
+                  name: "buyMore",
+                  type: "confirm",
+                  message: "Would you like to buy something else?"
+                })
+              .then(function (answer) {
+                if (answer.buyMore == true) {
+                  queryProducts();
+                } else {
+                  console.log("Okay... bye then!");
+                  connection.end();
+                }
+              })
           }
-
         });
     } else {
-      console.log("That item doesn't exist.");
+      console.log("That item doesn't exist. Please try again.");
       promptUser();
     }
-
   });
-  // connection.end();
 }
-
-
-
